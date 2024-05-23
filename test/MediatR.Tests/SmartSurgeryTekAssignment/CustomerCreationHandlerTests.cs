@@ -27,6 +27,8 @@ namespace MediatR.Tests.SmartSurgeryTekAssignment
                     scanner.WithDefaultConventions();
                 });
                 cfg.ForSingletonOf<ICustomerDomainService>().Use(customerDomainService);
+                cfg.For<IRequestExceptionHandler<CustomerCreationRequest, Customer, Exception>>().Use<CustomerCreationExceptionHandler>();
+                cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestExceptionProcessorBehavior<,>));
                 cfg.For<IMediator>().Use<Mediator>();
             });
 
@@ -34,17 +36,20 @@ namespace MediatR.Tests.SmartSurgeryTekAssignment
         }
 
         [Fact]
-        public async Task Handle_CustomerIsNull_ThrowException()
+        public async Task Handle_CustomerIsNull_CustomerIdIsDefaultGuid()
         {
             // Arrange
             var request = new CustomerCreationRequest();
 
-            // Act & Assert
-            await Should.ThrowAsync<ArgumentNullException>(async () => await _mediator.Send(request));
+            // Act
+            var response = await _mediator.Send(request);
+
+            // Assert
+            response.Id.ShouldBe(Guid.Empty);
         }
 
         [Fact]
-        public async Task Handle_CustomerNameIsEmpty_ThrowException()
+        public async Task Handle_CustomerNameIsEmpty_CustomerIdIsDefaultGuid()
         {
             // Arrange
             var customer = new Customer();
@@ -53,8 +58,11 @@ namespace MediatR.Tests.SmartSurgeryTekAssignment
                 Customer = customer,
             };
 
-            // Act & Assert
-            await Should.ThrowAsync<ArgumentNullException>(async () => await _mediator.Send(request));
+            // Act
+            var response = await _mediator.Send(request);
+
+            // Assert
+            response.Id.ShouldBe(Guid.Empty);
         }
 
         [Fact]
